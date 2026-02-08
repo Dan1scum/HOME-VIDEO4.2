@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<h1>Movies</h1>
+	<div class="row">
+		{% for movie in movies %}
+			<div class="col-md-4 mb-3">
+				<div class="card">
+					{% if movie.poster %}
+						<img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}">
+					{% endif %}
+					<div class="card-body">
+						<h5 class="card-title">{{ movie.title }}</h5>
+						<p class="card-text">{{ movie.description|truncatechars:120 }}</p>
+						<p class="card-text"><small class="text-muted">Category: {{ movie.category }}</small></p>
+						<a href="{% url 'movies:detail' movie.pk %}" class="btn btn-primary">Details</a>
+					</div>
+				</div>
+			</div>
+		{% empty %}
+			<p>No movies found.</p>
+		{% endfor %}
+	</div>
+{% endblock %}

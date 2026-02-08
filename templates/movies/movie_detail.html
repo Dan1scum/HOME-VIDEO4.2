@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div class="row">
+		<div class="col-md-4">
+			{% if movie.poster %}
+				<img src="{{ movie.poster.url }}" class="img-fluid" alt="{{ movie.title }}">
+			{% endif %}
+		</div>
+		<div class="col-md-8">
+			<h1>{{ movie.title }}</h1>
+			<p>{{ movie.description }}</p>
+			<p><strong>Category:</strong> {{ movie.category }}</p>
+			<p><strong>Genres:</strong>
+				{% for g in movie.genres.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}
+			</p>
+			<p><strong>Release date:</strong> {{ movie.release_date }}</p>
+		</div>
+	</div>
+{% endblock %}
