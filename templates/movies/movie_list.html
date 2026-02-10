@@ -2,6 +2,23 @@
 
 {% block content %}
 	<h1>Movies</h1>
+	
+	<!-- Sorting buttons -->
+	<div class="mb-3">
+		<a href="?sort=-created_at{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
+		   class="btn btn-sm {% if sort_by == '-created_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+			Newest
+		</a>
+		<a href="?sort=title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
+		   class="btn btn-sm {% if sort_by == 'title' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+			A-Z
+		</a>
+		<a href="?sort=-title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
+		   class="btn btn-sm {% if sort_by == '-title' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+			Z-A
+		</a>
+	</div>
+
 	<div class="row">
 		{% for movie in movies %}
 			<div class="col-md-4 mb-3">
@@ -21,4 +38,39 @@
 			<p>No movies found.</p>
 		{% endfor %}
 	</div>
+
+	<!-- Pagination -->
+	{% if movies.has_other_pages %}
+	<nav aria-label="Page navigation" class="mt-4">
+		<ul class="pagination">
+			{% if movies.has_previous %}
+				<li class="page-item">
+					<a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">First</a>
+				</li>
+				<li class="page-item">
+					<a class="page-link" href="?page={{ movies.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Previous</a>
+				</li>
+			{% endif %}
+			
+			{% for num in movies.paginator.page_range %}
+				{% if movies.number == num %}
+					<li class="page-item active"><span class="page-link">{{ num }}</span></li>
+				{% elif num > movies.number|add:'-3' and num < movies.number|add:'3' %}
+					<li class="page-item">
+						<a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
+					</li>
+				{% endif %}
+			{% endfor %}
+			
+			{% if movies.has_next %}
+				<li class="page-item">
+					<a class="page-link" href="?page={{ movies.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Next</a>
+				</li>
+				<li class="page-item">
+					<a class="page-link" href="?page={{ movies.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Last</a>
+				</li>
+			{% endif %}
+		</ul>
+	</nav>
+	{% endif %}
 {% endblock %}
