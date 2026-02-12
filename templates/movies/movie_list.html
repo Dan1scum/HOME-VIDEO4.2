@@ -2,75 +2,89 @@
 
 {% block content %}
 	<h1>Movies</h1>
-	
-	<!-- Sorting buttons -->
-	<div class="mb-3">
-		<a href="?sort=-created_at{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
-		   class="btn btn-sm {% if sort_by == '-created_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-			Newest
-		</a>
-		<a href="?sort=title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
-		   class="btn btn-sm {% if sort_by == 'title' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-			A-Z
-		</a>
-		<a href="?sort=-title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" 
-		   class="btn btn-sm {% if sort_by == '-title' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-			Z-A
-		</a>
-	</div>
 
-	<div class="row">
-		{% for movie in movies %}
-			<div class="col-md-4 mb-3">
-				<div class="card">
-					{% if movie.poster %}
-						<img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}">
-					{% endif %}
-					<div class="card-body">
-						<h5 class="card-title">{{ movie.title }}</h5>
-						<p class="card-text">{{ movie.description|truncatechars:120 }}</p>
-						<p class="card-text"><small class="text-muted">Category: {{ movie.category }}</small></p>
-						<a href="{% url 'movies:detail' movie.pk %}" class="btn btn-primary">Details</a>
-					</div>
+	<div class="row mb-3">
+		<div class="col-md-3">
+			<h5>Filter by genres</h5>
+			<form id="filter-form" method="get">
+				{% for g in genres %}
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" name="genre" value="{{ g.id }}" id="genre-{{ g.id }}" {% if g.id in selected_genres %}checked{% endif %}>
+					<label class="form-check-label" for="genre-{{ g.id }}">{{ g.name }}</label>
 				</div>
+				{% endfor %}
+				<button class="btn btn-sm btn-outline-primary mt-2" type="submit">Apply</button>
+			</form>
+		</div>
+
+		<div class="col-md-9">
+			<div class="mb-3">
+				<a href="?sort=-created_at{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" class="btn btn-sm {% if sort_by == '-created_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">Newest</a>
+				<a href="?sort=title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" class="btn btn-sm {% if sort_by == 'title' %}btn-primary{% else %}btn-outline-primary{% endif %}">A-Z</a>
+				<a href="?sort=-title{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}" class="btn btn-sm {% if sort_by == '-title' %}btn-primary{% else %}btn-outline-primary{% endif %}">Z-A</a>
 			</div>
-		{% empty %}
-			<p>No movies found.</p>
-		{% endfor %}
+
+			<div id="cards-container">
+				{% include 'movies/_movie_cards.html' %}
+			</div>
+		</div>
 	</div>
 
-	<!-- Pagination -->
 	{% if movies.has_other_pages %}
 	<nav aria-label="Page navigation" class="mt-4">
 		<ul class="pagination">
 			{% if movies.has_previous %}
-				<li class="page-item">
-					<a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">First</a>
-				</li>
-				<li class="page-item">
-					<a class="page-link" href="?page={{ movies.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Previous</a>
-				</li>
+			<li class="page-item"><a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">First</a></li>
+			<li class="page-item"><a class="page-link" href="?page={{ movies.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Previous</a></li>
 			{% endif %}
-			
+
 			{% for num in movies.paginator.page_range %}
 				{% if movies.number == num %}
 					<li class="page-item active"><span class="page-link">{{ num }}</span></li>
 				{% elif num > movies.number|add:'-3' and num < movies.number|add:'3' %}
-					<li class="page-item">
-						<a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
-					</li>
+					<li class="page-item"><a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">{{ num }}</a></li>
 				{% endif %}
 			{% endfor %}
-			
+
 			{% if movies.has_next %}
-				<li class="page-item">
-					<a class="page-link" href="?page={{ movies.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Next</a>
-				</li>
-				<li class="page-item">
-					<a class="page-link" href="?page={{ movies.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Last</a>
-				</li>
+			<li class="page-item"><a class="page-link" href="?page={{ movies.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Next</a></li>
+			<li class="page-item"><a class="page-link" href="?page={{ movies.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if cat %}&category={{ cat }}{% endif %}{% if sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}">Last</a></li>
 			{% endif %}
 		</ul>
 	</nav>
 	{% endif %}
+
+	<script>
+	document.addEventListener('DOMContentLoaded', function(){
+		const form = document.getElementById('filter-form');
+		const ajaxUrl = "{% url 'movies:ajax_filter' %}";
+
+		function buildParams(){
+			const params = new URLSearchParams();
+			const qInput = document.querySelector('input[name="q"]');
+			if(qInput && qInput.value) params.set('q', qInput.value);
+			const urlParams = new URLSearchParams(window.location.search);
+			const cat = urlParams.get('category');
+			if(cat) params.set('category', cat);
+			const sort = urlParams.get('sort');
+			if(sort) params.set('sort', sort);
+			form.querySelectorAll('input[name="genre"]:checked').forEach(cb=> params.append('genre', cb.value));
+			return params.toString();
+		}
+
+		form.addEventListener('change', async function(){
+			const params = buildParams();
+			try{
+				const resp = await fetch(ajaxUrl + '?' + params);
+				if(resp.ok){
+					const html = await resp.text();
+					document.getElementById('cards-container').innerHTML = html;
+				}
+			}catch(e){
+				console.error('AJAX filter failed', e);
+			}
+		});
+	});
+	</script>
+
 {% endblock %}
