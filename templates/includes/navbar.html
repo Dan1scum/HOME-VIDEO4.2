@@ -1,7 +1,7 @@
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="{% url 'movies:list' %}">FilmRoom</a>
+		<a class="navbar-brand fw-bold" href="{% url 'movies:list' %}">🎬 FilmRoom</a>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
 			<span class="navbar-toggler-icon"></span>
 		</button>
@@ -12,13 +12,18 @@
 				</li>
 				{% if user.is_authenticated %}
 				<li class="nav-item">
-					<a class="nav-link" href="{% url 'movies:create' %}">Add Movie</a>
+					<a class="nav-link" href="{% url 'movies:create' %}">
+						<i class="bi bi-plus-circle"></i> Add Movie
+					</a>
 				</li>
 				{% endif %}
 				<li class="nav-item dropdown">
-					<a class="nav-link dropdown-toggle" href="#" id="catDropdown" role="button" data-bs-toggle="dropdown">Categories</a>
+					<a class="nav-link dropdown-toggle" href="#" id="catDropdown" role="button" data-bs-toggle="dropdown">
+						<i class="bi bi-tags"></i> Categories
+					</a>
 					<ul class="dropdown-menu" aria-labelledby="catDropdown">
 						<li><a class="dropdown-item" href="{% url 'movies:list' %}">All</a></li>
+						<li><hr class="dropdown-divider"></li>
 						{% for c in categories %}
 							<li><a class="dropdown-item" href="{% url 'movies:list' %}?category={{ c.id }}">{{ c.name }}</a></li>
 						{% endfor %}
@@ -27,17 +32,27 @@
 			</ul>
 
 			<form class="d-flex me-3" method="get" action="{% url 'movies:list' %}">
-				<input class="form-control me-2" type="search" placeholder="Search" name="q" aria-label="Search">
-				<button class="btn btn-outline-success" type="submit">Search</button>
+				<input class="form-control form-control-sm me-2" type="search" placeholder="Search movies..." name="q" aria-label="Search">
+				<button class="btn btn-outline-success btn-sm" type="submit">Search</button>
 			</form>
 
 			<ul class="navbar-nav mb-2 mb-lg-0">
 				{% if user.is_authenticated %}
-					<li class="nav-item">
-						<a class="nav-link" href="#">{{ user.username }}</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{% url 'movies:logout' %}">Logout</a>
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+							{% if user.profile and user.profile.avatar %}
+								<img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle me-1" style="width: 30px; height: 30px; object-fit: cover;">
+							{% else %}
+								<i class="bi bi-person-circle"></i>
+							{% endif %}
+							{{ user.username }}
+						</a>
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+							<li><a class="dropdown-item" href="{% url 'movies:profile' %}">My Profile</a></li>
+							<li><a class="dropdown-item" href="{% url 'movies:profile_edit' %}">Edit Profile</a></li>
+							<li><hr class="dropdown-divider"></li>
+							<li><a class="dropdown-item" href="{% url 'movies:logout' %}">Logout</a></li>
+						</ul>
 					</li>
 				{% else %}
 					<li class="nav-item">

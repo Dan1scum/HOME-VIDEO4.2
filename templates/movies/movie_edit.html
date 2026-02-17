@@ -3,7 +3,7 @@
 {% block content %}
 	<div class="row justify-content-center">
 		<div class="col-md-8">
-			<h1>Add Movie</h1>
+			<h1>Edit Movie</h1>
 
 			{% if form.non_field_errors %}
 				<div class="alert alert-danger">
@@ -54,6 +54,20 @@
 					</div>
 
 					<div class="col-md-6 mb-3">
+						<label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }}</label>
+						{{ form.rating }}
+						{% if form.rating.errors %}
+							<div class="alert alert-danger small mt-1">
+								{% for error in form.rating.errors %}
+									<p>{{ error }}</p>
+								{% endfor %}
+							</div>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-md-6 mb-3">
 						<label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
 						{{ form.category }}
 						{% if form.category.errors %}
@@ -64,24 +78,30 @@
 							</div>
 						{% endif %}
 					</div>
-				</div>
 
-				<div class="mb-3">
-					<label class="form-label">{{ form.genres.label }}</label>
-					<div class="border p-2 rounded" style="max-height: 200px; overflow-y: auto;">
-						{{ form.genres }}
-					</div>
-					{% if form.genres.errors %}
-						<div class="alert alert-danger small mt-1">
-							{% for error in form.genres.errors %}
-								<p>{{ error }}</p>
-							{% endfor %}
+					<div class="col-md-6 mb-3">
+						<label class="form-label">{{ form.genres.label }}</label>
+						<div class="border p-2 rounded" style="max-height: 200px; overflow-y: auto;">
+							{{ form.genres }}
 						</div>
-					{% endif %}
+						{% if form.genres.errors %}
+							<div class="alert alert-danger small mt-1">
+								{% for error in form.genres.errors %}
+									<p>{{ error }}</p>
+								{% endfor %}
+							</div>
+						{% endif %}
+					</div>
 				</div>
 
 				<div class="mb-3">
 					<label for="{{ form.poster.id_for_label }}" class="form-label">{{ form.poster.label }}</label>
+					{% if movie.poster %}
+						<div class="mb-2">
+							<img src="{{ movie.poster.url }}" style="max-width: 200px;" class="rounded">
+							<p class="text-muted small">Current poster</p>
+						</div>
+					{% endif %}
 					{{ form.poster }}
 					{% if form.poster.errors %}
 						<div class="alert alert-danger small mt-1">
@@ -90,15 +110,13 @@
 							{% endfor %}
 						</div>
 					{% endif %}
-					<small class="form-text text-muted">Max size: 5MB. Supported: jpg, png, gif</small>
 				</div>
 
 				<div class="d-flex gap-2">
-					<button class="btn btn-primary" type="submit">Create</button>
-					<a href="{% url 'movies:list' %}" class="btn btn-outline-secondary">Cancel</a>
+					<button type="submit" class="btn btn-primary">Save Changes</button>
+					<a href="{% url 'movies:detail' movie.pk %}" class="btn btn-outline-secondary">Cancel</a>
 				</div>
 			</form>
 		</div>
 	</div>
 {% endblock %}
-

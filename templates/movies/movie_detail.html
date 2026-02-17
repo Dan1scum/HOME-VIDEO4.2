@@ -1,20 +1,79 @@
 {% extends 'base.html' %}
 
 {% block content %}
-	<div class="row">
+	<div class="row mb-3">
 		<div class="col-md-4">
 			{% if movie.poster %}
-				<img src="{{ movie.poster.url }}" class="img-fluid" alt="{{ movie.title }}">
+				<img src="{{ movie.poster.url }}" class="img-fluid rounded" alt="{{ movie.title }}">
+			{% else %}
+				<div class="bg-light rounded text-center p-5" style="aspect-ratio: 2/3;">
+					<p class="text-muted">No poster</p>
+				</div>
 			{% endif %}
 		</div>
 		<div class="col-md-8">
 			<h1>{{ movie.title }}</h1>
-			<p>{{ movie.description }}</p>
-			<p><strong>Category:</strong> {{ movie.category }}</p>
-			<p><strong>Genres:</strong>
-				{% for g in movie.genres.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}
+			
+			{% if movie.author %}
+			<p class="text-muted">
+				<strong>Author:</strong> 
+				<a href="{% url 'movies:user_profile' movie.author.username %}">{{ movie.author.get_full_name|default:movie.author.username }}</a>
 			</p>
-			<p><strong>Release date:</strong> {{ movie.release_date }}</p>
+			{% endif %}
+
+			<p class="mb-3">{{ movie.description }}</p>
+
+			<div class="mb-3">
+				<p><strong>Rating:</strong> 
+					<span class="badge bg-info">{{ movie.rating|default:"Not rated" }}</span>
+				</p>
+			</div>
+
+			<div class="mb-3">
+				<p><strong>Category:</strong> 
+					{% if movie.category %}
+						<a href="?category={{ movie.category.id }}" class="badge bg-primary">{{ movie.category.name }}</a>
+					{% else %}
+						<span class="text-muted">No category</span>
+					{% endif %}
+				</p>
+			</div>
+
+			<div class="mb-3">
+				<p><strong>Genres:</strong>
+					{% for g in movie.genres.all %}
+						<a href="?genre={{ g.id }}" class="badge bg-secondary">{{ g.name }}</a>
+					{% empty %}
+						<span class="text-muted">No genres</span>
+					{% endfor %}
+				</p>
+			</div>
+
+			<p><strong>Release date:</strong> 
+				{% if movie.release_date %}
+					{{ movie.release_date|date:"d.m.Y" }}
+				{% else %}
+					<span class="text-muted">Unknown</span>
+				{% endif %}
+			</p>
+
+			<p class="text-muted small">
+				<strong>Added:</strong> {{ movie.created_at|date:"d.m.Y H:i" }}
+				<br>
+				<strong>Updated:</strong> {{ movie.updated_at|date:"d.m.Y H:i" }}
+			</p>
+
+			{% if is_author %}
+			<div class="mt-4">
+				<a href="{% url 'movies:edit' movie.pk %}" class="btn btn-warning">Edit</a>
+				<a href="{% url 'movies:delete' movie.pk %}" class="btn btn-danger">Delete</a>
+			</div>
+			{% endif %}
 		</div>
 	</div>
+
+	<div class="mt-5">
+		<a href="{% url 'movies:list' %}" class="btn btn-outline-secondary">Back to movies</a>
+	</div>
 {% endblock %}
+

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div class="row justify-content-center">
+		<div class="col-md-6">
+			<div class="card border-danger">
+				<div class="card-body">
+					<h2 class="card-title text-danger">Delete Movie</h2>
+					
+					<div class="alert alert-warning" role="alert">
+						<strong>Are you sure?</strong> This action cannot be undone.
+					</div>
+
+					<div class="mb-4">
+						<h4>{{ movie.title }}</h4>
+						{% if movie.poster %}
+							<img src="{{ movie.poster.url }}" style="max-width: 150px;" class="rounded mb-3">
+						{% endif %}
+						<p>{{ movie.description|truncatewords:30 }}</p>
+					</div>
+
+					<form method="post" class="d-flex gap-2">
+						{% csrf_token %}
+						<button type="submit" class="btn btn-danger">Yes, Delete</button>
+						<a href="{% url 'movies:detail' movie.pk %}" class="btn btn-outline-secondary">Cancel</a>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

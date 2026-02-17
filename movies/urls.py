@@ -7,9 +7,18 @@ app_name = 'movies'
 urlpatterns = [
     path('', views.movie_list, name='list'),
     path('movie/<int:pk>/', views.movie_detail, name='detail'),
+    path('movie/<int:pk>/edit/', views.movie_edit, name='edit'),
+    path('movie/<int:pk>/delete/', views.movie_delete, name='delete'),
     path('create/', views.movie_create, name='create'),
     path('ajax/filter/', views.ajax_filter, name='ajax_filter'),
+    
+    # User & Profile URLs (профиль/edit/ ДОЛЖЕН быть ДО профиля/<username>/)
     path('register/', views.register_view, name='register'),
     path('login/', auth_views.LoginView.as_view(template_name='movies/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='movies:list'), name='logout'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/<str:username>/', views.profile_view, name='user_profile'),
 ]
+
+
