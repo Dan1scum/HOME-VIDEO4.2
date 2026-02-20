@@ -5,11 +5,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.db.models import Q
+from django.http import JsonResponse
+from django.db.models import Q, Count, F
 
 from .models import Movie, Category, Genre, UserProfile
 from .forms import MovieForm, RegisterForm, UserProfileForm, MovieEditForm
-from .mixins import MovieOwnerTestMixin
+from .utils import filter_movies, get_movie_context
 
 
 class MovieListView(ListView):
@@ -98,13 +99,17 @@ class AjaxFilterView(View):
                 pass
         
         return render(request, 'movies/_movie_cards.html', {'movies': qs})
+        if genres_selected:
+            qs = qs.filter(genres__id__in=genres_selected).distinct()
+        
+        return render(request, 'movies/_movie_cards.html', {'movies': qs})
 
 
 class MovieDetailView(DetailView):
+    """Детальный просмотр фильма"""
     model = Movie
     template_name = 'movies/movie_detail.html'
     context_object_name = 'movie'
-    queryset = Movie.objects.select_related('category', 'author').prefetch_related('genres')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -112,11 +117,11 @@ class MovieDetailView(DetailView):
             self.object.author == self.request.user 
             if self.request.user.is_authenticated else False
         )
-        context['is_staff'] = self.request.user.is_staff if self.request.user.is_authenticated else False
         return context
 
 
 class MovieCreateView(LoginRequiredMixin, CreateView):
+    """Создание нового фильма"""
     model = Movie
     form_class = MovieForm
     template_name = 'movies/movie_create.html'
@@ -126,45 +131,63 @@ class MovieCreateView(LoginRequiredMixin, CreateView):
         movie.author = self.request.user
         movie.save()
         form.save_m2m()
-        messages.success(self.request, 'Movie created successfully!')
+        messages.success(self.request, 'Movie created successfully')
         return redirect('movies:detail', pk=movie.pk)
 
 
-class MovieEditView(LoginRequiredMixin, MovieOwnerTestMixin, UpdateView):
+class MovieEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Редактирование фильма"""
     model = Movie
     form_class = MovieEditForm
     template_name = 'movies/movie_edit.html'
     context_object_name = 'movie'
-    queryset = Movie.objects.select_related('category', 'author').prefetch_related('genres')
+    
+    def test_func(self):
+        movie = self.get_object()
+        return movie.author == self.request.user or self.request.user.is_staff
+    
+    def handle_no_permission(self):
+        messages.error(self.request, 'You do not have permission to edit this movie')
+        return redirect('movies:detail', pk=self.get_object().pk)
     
     def get_success_url(self):
-        messages.success(self.request, 'Movie updated successfully!')
+        messages.success(self.request, 'Movie updated successfully')
         return reverse_lazy('movies:detail', kwargs={'pk': self.object.pk})
 
 
-class MovieDeleteView(LoginRequiredMixin, MovieOwnerTestMixin, DeleteView):
+class MovieDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """Удаление фильма"""
     model = Movie
     template_name = 'movies/movie_delete.html'
-    context_object_name = 'movie'
     success_url = reverse_lazy('movies:list')
-    queryset = Movie.objects.select_related('category', 'author').prefetch_related('genres')
+    context_object_name = 'movie'
+    
+    def test_func(self):
+        movie = self.get_object()
+        return movie.author == self.request.user or self.request.user.is_staff
+    
+    def handle_no_permission(self):
+        messages.error(self.request, 'You do not have permission to delete this movie')
+        return redirect('movies:detail', pk=self.get_object().pk)
     
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Movie deleted successfully!')
+        messages.success(request, 'Movie deleted successfully')
         return super().delete(request, *args, **kwargs)
 
 
 class RegisterView(CreateView):
+    """Регистрация пользователя"""
     form_class = RegisterForm
     template_name = 'movies/register.html'
     success_url = reverse_lazy('movies:login')
     
     def form_valid(self, form):
-        messages.success(self.request, 'Registration successful! You can now log in.')
+        messages.success(self.request, 'Registration successful. You can now log in.')
         return super().form_valid(form)
 
 
 class ProfileView(DetailView):
+    """Просмотр профиля пользователя"""
     model = User
     template_name = 'movies/profile.html'
     context_object_name = 'profile_user'
@@ -180,9 +203,6 @@ class ProfileView(DetailView):
             return redirect('movies:login')
         return self.request.user
     
-    def get_queryset(self):
-        return User.objects.prefetch_related('movies', 'profile')
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = context['profile_user']
@@ -193,13 +213,14 @@ class ProfileView(DetailView):
             profile = UserProfile.objects.create(user=user)
         
         context['profile'] = profile
-        context['user_movies'] = user.movies.select_related('category').prefetch_related('genres')
+        context['user_movies'] = user.movies.all()
         context['is_owner'] = user == self.request.user if self.request.user.is_authenticated else False
         
         return context
 
 
 class ProfileEditView(LoginRequiredMixin, UpdateView):
+    """Редактирование профиля пользователя"""
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'movies/profile_edit.html'
@@ -213,5 +234,35 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         return profile
     
     def get_success_url(self):
-        messages.success(self.request, 'Profile updated successfully!')
+        messages.success(self.request, 'Profile updated successfully')
         return reverse_lazy('movies:profile', kwargs={'username': self.request.user.username})
+
+
+# Функция для обратной совместимости (если используется в других местах)
+def movie_list(request):
+    return MovieListView.as_view()(request)
+
+def ajax_filter(request):
+    return AjaxFilterView.as_view()(request)
+
+def movie_detail(request, pk):
+    return MovieDetailView.as_view()(request, pk=pk)
+
+def movie_create(request):
+    return MovieCreateView.as_view()(request)
+
+def movie_edit(request, pk):
+    return MovieEditView.as_view()(request, pk=pk)
+
+def movie_delete(request, pk):
+    return MovieDeleteView.as_view()(request, pk=pk)
+
+def register_view(request):
+    return RegisterView.as_view()(request)
+
+def profile_view(request, username=None):
+    return ProfileView.as_view()(request, username=username)
+
+def profile_edit(request):
+    return ProfileEditView.as_view()(request)
+
